@@ -1,0 +1,16 @@
+Numero de funcionarios: 3
+Funcionario: Chico
+  - Nome: 5 bytes
+  - Cargo: 8 bytes
+  - Escala: 13 bytes
+  - Total: 26 bytes
+Funcionario: Bilu
+  - Nome: 4 bytes
+  - Cargo: 5 bytes
+  - Escala: 13 bytes
+  - Total: 22 bytes
+Funcionario: Wilson
+  - Nome: 6 bytes
+  - Cargo: 7 bytes
+  - Escala: 13 bytes
+  - Total: 26 bytes
