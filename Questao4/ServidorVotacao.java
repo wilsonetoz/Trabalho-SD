@@ -8,7 +8,7 @@ public class ServidorVotacao {
     private static final String MULTICAST_IP = "230.0.0.1";
     private static final int PORTA_UDP = 12346;
     private static final int DURACAO_VOTACAO = 180;
-    private static final Map<String, Integer> candidatos = new ConcurrentHashMap<>(); // Armazena candidatos e votos
+    private static final Map<String, Integer> candidatos = new ConcurrentHashMap<>();
     private static final Set<PrintWriter> eleitoresConectados = Collections.synchronizedSet(new HashSet<>());
     private static boolean votacaoAberta = true;
 
