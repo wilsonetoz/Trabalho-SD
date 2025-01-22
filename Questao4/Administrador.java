@@ -45,47 +45,40 @@ public class Administrador {
             }
         }
     }
-
-    // Envia uma nota informativa aos eleitores via multicast
     private static void enviarNotaInformativa(String mensagem) {
         try (DatagramSocket socket = new DatagramSocket()) {
-            InetAddress grupo = InetAddress.getByName(MULTICAST_IP); // Endereço Multicast
+            InetAddress grupo = InetAddress.getByName(MULTICAST_IP);
             byte[] buffer = mensagem.getBytes();
 
             DatagramPacket pacote = new DatagramPacket(buffer, buffer.length, grupo, PORTA_UDP);
-            socket.send(pacote); // Envia a mensagem multicast
-
+            socket.send(pacote); 
             System.out.println("Mensagem enviada: " + mensagem);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-
-    // Adiciona um candidato à lista através do TCP
     private static void adicionarCandidato(String nome) {
         try (Socket socket = new Socket("localhost", PORTA_TCP);
                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
                 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
 
-            out.println("ADMIN"); // Indica que é um administrador
-            out.println("ADICIONAR_CANDIDATO " + nome); // Envia comando para adicionar candidato
-            String resposta = in.readLine(); // Aguarda resposta do servidor
+            out.println("ADMIN");
+            out.println("ADICIONAR_CANDIDATO " + nome);
+            String resposta = in.readLine();
             System.out.println(resposta);
 
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-
-    // Remove um candidato da lista através do TCP
     private static void removerCandidato(String nome) {
         try (Socket socket = new Socket("localhost", PORTA_TCP);
                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
                 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
 
-            out.println("ADMIN"); // Indica que é um administrador
-            out.println("REMOVER_CANDIDATO " + nome); // Envia comando para remover candidato
-            String resposta = in.readLine(); // Aguarda resposta do servidor
+            out.println("ADMIN");
+            out.println("REMOVER_CANDIDATO " + nome);
+            String resposta = in.readLine();
             System.out.println(resposta);
 
         } catch (IOException e) {
