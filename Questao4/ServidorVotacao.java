@@ -7,13 +7,13 @@ public class ServidorVotacao {
     private static final int PORTA_TCP = 12345;
     private static final String MULTICAST_IP = "230.0.0.1";
     private static final int PORTA_UDP = 12346;
-    private static final int DURACAO_VOTACAO = 180;
+    private static final int DURACAO_VOTACAO = 60;
     private static final Map<String, Integer> candidatos = new ConcurrentHashMap<>();
     private static final Set<PrintWriter> eleitoresConectados = Collections.synchronizedSet(new HashSet<>());
     private static boolean votacaoAberta = true;
 
     public static void main(String[] args) {
-        System.out.println("Servidor de votação iniciado...");
+        System.out.println("Servidor de votacao iniciado...");
         candidatos.put("Wilson", 0);
         candidatos.put("Eduarda", 0);
         candidatos.put("Chico", 0);
@@ -40,6 +40,15 @@ public class ServidorVotacao {
         }, DURACAO_VOTACAO, TimeUnit.SECONDS);
     }
 
+    private static void escreverNoArquivo(String mensagem) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("votacao.log", true))) {
+            writer.write(mensagem);
+            writer.newLine();
+        } catch (IOException e) {
+            System.err.println("Erro ao escrever no arquivo: " + e.getMessage());
+        }
+    }
+
     private static void iniciarReceptorMulticast() {
         try (MulticastSocket socket = new MulticastSocket(PORTA_UDP)) {
             InetAddress grupo = InetAddress.getByName(MULTICAST_IP);
@@ -51,6 +60,7 @@ public class ServidorVotacao {
                 socket.receive(pacote);
                 String mensagem = new String(pacote.getData(), 0, pacote.getLength());
                 System.out.println("Nota recebida: " + mensagem);
+                escreverNoArquivo(mensagem);
 
             }
         } catch (IOException e) {
@@ -92,11 +102,12 @@ public class ServidorVotacao {
                 if (comando.startsWith("ADICIONAR_CANDIDATO")) {
                     String nomeCandidato = comando.substring("ADICIONAR_CANDIDATO ".length()).trim();
                     if (nomeCandidato.isEmpty()) {
-                        out.println("Erro: Nome do candidato não pode ser vazio.");
+                        out.println("Erro: Nome do candidato nao pode ser vazio.");
                     } else {
                         candidatos.put(nomeCandidato, 0);
                         out.println("Candidato " + nomeCandidato + " adicionado.");
                         System.out.println("Candidato " + nomeCandidato + " removido.");
+                        escreverNoArquivo("candidato adicionado: " + nomeCandidato);
                         enviarListaCandidatosParaEleitores();
                     }
                 } else if (comando.startsWith("REMOVER_CANDIDATO")) {
@@ -105,12 +116,13 @@ public class ServidorVotacao {
                         candidatos.remove(nomeCandidato);
                         out.println("Candidato " + nomeCandidato + " removido.");
                         System.out.println("Candidato " + nomeCandidato + " removido.");
+                        escreverNoArquivo("candidato removido: " + nomeCandidato);
                         enviarListaCandidatosParaEleitores();
                     } else {
-                        out.println("Erro: Candidato não encontrado.");
+                        out.println("Erro: Candidato nao encontrado.");
                     }
                 } else {
-                    out.println("Comando inválido.");
+                    out.println("Comando invalido.");
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -137,20 +149,20 @@ public class ServidorVotacao {
                 String eleitor = in.readLine();
 
                 if (eleitor == null || eleitor.trim().isEmpty()) {
-                    out.println("Erro: Nome inválido.");
+                    out.println("Erro: Nome invalido.");
                     return;
                 }
                 synchronized (eleitoresAutenticados) {
                     if (eleitoresAutenticados.contains(eleitor)) {
-                        out.println("Erro: Você já votou!");
+                        out.println("Erro: Você ja votou!");
                         return;
                     } else {
                         eleitoresAutenticados.add(eleitor);
-                        out.println("Autenticação bem-sucedida. Você pode votar.");
+                        out.println("Autenticacao bem-sucedida. Você pode votar.");
                     }
                 }
                 if (!votacaoAberta) {
-                    out.println("A votação já foi encerrada.");
+                    out.println("A votacao ja foi encerrada.");
                     return;
                 }
 
@@ -160,8 +172,9 @@ public class ServidorVotacao {
                     candidatos.put(voto, candidatos.get(voto) + 1);
                     out.println("Voto registrado para " + voto);
                     System.out.println("Voto para " + voto + " de " + eleitor);
+                    escreverNoArquivo("voto de: " + eleitor + " para: " + voto);
                 } else {
-                    out.println("Candidato inválido ou votação encerrada.");
+                    out.println("Candidato invalido ou votacao encerrada.");
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -179,8 +192,17 @@ public class ServidorVotacao {
         String vencedor = Collections.max(candidatos.entrySet(), Map.Entry.comparingByValue()).getKey();
         int votos = candidatos.get(vencedor);
 
-        String resultado = " VOTAÇÃO ENCERRADA! O vencedor é: " + vencedor + " com " + votos + " votos!";
+        String resultado = " VOTACAO ENCERRADA! O vencedor e: " + vencedor + " com " + votos + " votos!";
         System.out.println(resultado);
+        escreverNoArquivo("Vencedor: " + resultado);
+        try (DatagramSocket socket = new DatagramSocket()) {
+            InetAddress grupo = InetAddress.getByName(MULTICAST_IP);
+            byte[] buffer = resultado.getBytes();
+            DatagramPacket pacote = new DatagramPacket(buffer, buffer.length, grupo, PORTA_UDP);
+            socket.send(pacote);
+        } catch (IOException e) {
+            System.err.println("Erro ao enviar resultado via multicast: " + e.getMessage());
+        }
 
         synchronized (eleitoresConectados) {
             for (PrintWriter eleitor : eleitoresConectados) {
