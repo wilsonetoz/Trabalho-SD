@@ -45,18 +45,20 @@ public class Administrador {
             }
         }
     }
+
     private static void enviarNotaInformativa(String mensagem) {
         try (DatagramSocket socket = new DatagramSocket()) {
             InetAddress grupo = InetAddress.getByName(MULTICAST_IP);
             byte[] buffer = mensagem.getBytes();
 
             DatagramPacket pacote = new DatagramPacket(buffer, buffer.length, grupo, PORTA_UDP);
-            socket.send(pacote); 
+            socket.send(pacote);
             System.out.println("Mensagem enviada: " + mensagem);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
     private static void adicionarCandidato(String nome) {
         try (Socket socket = new Socket("localhost", PORTA_TCP);
                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
@@ -71,6 +73,7 @@ public class Administrador {
             e.printStackTrace();
         }
     }
+
     private static void removerCandidato(String nome) {
         try (Socket socket = new Socket("localhost", PORTA_TCP);
                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
