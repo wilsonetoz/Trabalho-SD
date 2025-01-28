@@ -1,9 +1,11 @@
 import java.io.*;
 import java.net.Socket;
+import java.util.List;
 
 public class TesteSupermercado {
-    public static void main(String[] args) {
+    private static final String FILE_NAME = "funcionarios.dat";
 
+    public static void main(String[] args) {
         try {
             Supermercado supermercado = new Supermercado("Ponto Certo");
 
@@ -20,37 +22,55 @@ public class TesteSupermercado {
             supermercado.adicionarFuncionario(caixa);
             supermercado.adicionarFuncionario(gerente);
 
-            int numFuncionarios = supermercado.getFuncionarios().size();
-            StringBuilder output = new StringBuilder();
-            output.append("Numero de funcionarios: ").append(numFuncionarios).append("\n");
+            salvarFuncionarios(supermercado.getFuncionarios());
+            exibirInformacoesFuncionarios(supermercado.getFuncionarios());
 
-            for (Funcionario f : supermercado.getFuncionarios()) {
-                int bytesNome = f.getNome().getBytes().length;
-                int bytesCargo = f.getCargo().getBytes().length;
-                int bytesEscala = f.obterEscala().getBytes().length;
-
-                int totalBytes = bytesNome + bytesCargo + bytesEscala;
-                output.append("Funcionario: ").append(f.getNome()).append("\n");
-                output.append("  - Nome: ").append(bytesNome).append(" bytes\n");
-                output.append("  - Cargo: ").append(bytesCargo).append(" bytes\n");
-                output.append("  - Escala: ").append(bytesEscala).append(" bytes\n");
-                output.append("  - Total: ").append(totalBytes).append(" bytes\n");
-            }
-            try (Socket socket = new Socket("127.0.0.1", 12345);
-                    PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
-
-                writer.println(output.toString());
-                writer.println("EOF");
-                System.out.println("\nResposta do servidor:");
-                String response;
-                while ((response = reader.readLine()) != null) {
-                    System.out.println(response);
-                }
-            }
-
+            enviarArquivoParaServidor();
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    private static void salvarFuncionarios(List<Funcionario> funcionarios) throws IOException {
+        try (FuncionariosOutputStream fos = new FuncionariosOutputStream(new FileOutputStream(FILE_NAME))) {
+            fos.writeFuncionarios(funcionarios);
+            System.out.println("Funcionarios salvos no arquivo " + FILE_NAME);
+        }
+    }
+
+    private static void exibirInformacoesFuncionarios(List<Funcionario> funcionarios) throws IOException {
+        for (Funcionario f : funcionarios) {
+            int bytesCargo = f.getCargo().getBytes().length;
+            int bytesEscala = f.obterEscala().getBytes().length;
+            int totalBytes = bytesCargo + bytesEscala;
+
+            System.out.println("Funcionario: " + f.getNome());
+            System.out.println("  - Cargo: " + bytesCargo + " bytes");
+            System.out.println("  - Escala: " + bytesEscala + " bytes");
+            System.out.println("  - Total: " + totalBytes + " bytes");
+        }//Se Quiser Ler o arquivo
+  //      try (FuncionariosInputStream fis = new FuncionariosInputStream(new FileInputStream("funcionarios_recebidos.dat"))) {
+  //      List<Funcionario> Lerfuncionarios = fis.readFuncionarios();
+  //      for (Funcionario f : Lerfuncionarios) {
+  //          System.out.println("Nome: " + f.getNome());
+  //          System.out.println("Cargo: " + f.getCargo());
+  //          System.out.println("Escala: " + f.obterEscala());
+  //      }
+  //      }
+    }
+
+    private static void enviarArquivoParaServidor() throws IOException {
+        try (Socket socket = new Socket("127.0.0.1", 12345);
+                OutputStream os = socket.getOutputStream();
+                FileInputStream fis = new FileInputStream(FILE_NAME)) {
+
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = fis.read(buffer)) != -1) {
+                os.write(buffer, 0, bytesRead);
+            }
+            os.flush();
+            System.out.println("Arquivo enviado para o servidor.");
         }
     }
 }
