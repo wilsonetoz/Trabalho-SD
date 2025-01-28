@@ -1,35 +1,48 @@
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.List;
 
 public class ServidorTCP {
-    public static void main(String[] args) {
+    private static final String FILE_NAME = "funcionarios_recebidos.dat";
 
+    public static void main(String[] args) {
         try (ServerSocket serverSocket = new ServerSocket(12345)) {
             System.out.println("Servidor aguardando conexoes na porta 12345...");
 
             while (true) {
-                try (Socket clientSocket = serverSocket.accept();
-                        BufferedReader reader = new BufferedReader(
-                                new InputStreamReader(clientSocket.getInputStream()));
-                        PrintWriter writer = new PrintWriter(clientSocket.getOutputStream(), true)) {
-
+                try (Socket clientSocket = serverSocket.accept()) {
                     System.out.println("Cliente conectado: " + clientSocket.getInetAddress());
 
-                    StringBuilder dadosRecebidos = new StringBuilder();
-                    String line;
+                    receberArquivo(clientSocket.getInputStream());
+                    List<Funcionario> funcionarios = lerFuncionariosDoArquivo();
 
-                    while ((line = reader.readLine()) != null) {
-                        if (line.equals("EOF"))
-                            break;
-                        System.out.println(line);
-                        dadosRecebidos.append(line).append("\n");
+                    System.out.println("Funcionarios recebidos:");
+                    for (Funcionario f : funcionarios) {
+                        System.out.println(
+                                "Nome: " + f.getNome() + ", Cargo: " + f.getCargo() + ", Escala: " + f.obterEscala());
                     }
-                    writer.println("Dados recebidos com sucesso!\n" + dadosRecebidos);
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    private static void receberArquivo(InputStream inputStream) throws IOException {
+        try (FileOutputStream fos = new FileOutputStream(FILE_NAME)) {
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                fos.write(buffer, 0, bytesRead);
+            }
+            System.out.println("Arquivo recebido e salvo como " + FILE_NAME);
+        }
+    }
+
+    private static List<Funcionario> lerFuncionariosDoArquivo() throws IOException {
+        try (FuncionariosInputStream fis = new FuncionariosInputStream(new FileInputStream(FILE_NAME))) {
+            return fis.readFuncionarios();
         }
     }
 }
