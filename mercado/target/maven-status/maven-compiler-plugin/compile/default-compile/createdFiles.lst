@@ -1,0 +1,9 @@
+com\modelo\Funcionario.class
+com\cliente\TesteSupermercado.class
+com\remoto\SupermercadoService.class
+com\util\Escala.class
+com\modelo\Pessoa.class
+com\servidor\ServidorRMI.class
+com\servidor\SupermercadoServiceImpl.class
+com\util\EscalaImpl.class
+com\modelo\Supermercado.class
