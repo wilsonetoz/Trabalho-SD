@@ -1,0 +1,9 @@
+com\servidor\repository\SupermercadoRepository.class
+com\servidor\util\EscalaImpl.class
+com\servidor\controller\FuncionarioController.class
+com\servidor\util\Escala.class
+com\servidor\modelo\Funcionario.class
+com\servidor\service\SupermercadoService.class
+com\servidor\service\SupermercadoServiceImpl.class
+com\servidor\SupermercadoApplication.class
+com\servidor\modelo\Pessoa.class

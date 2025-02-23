@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciamento de Funcionarios</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        input, button {
+            padding: 8px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Gerenciamento de Funcionarios</h1>
+
+    <!-- Formulário para adicionar funcionário -->
+    <form id="addForm">
+        <input type="text" id="nome" placeholder="Nome" required>
+        <input type="text" id="cargo" placeholder="Cargo" required>
+        <input type="number" id="salario" placeholder="Salário" required>
+        <button type="submit">Adicionar Funcionario</button>
+    </form>
+
+    <!-- Tabela para listar funcionários -->
+    <table id="funcionariosTable">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Cargo</th>
+                <th>Salário</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Os funcionários serão inseridos aqui via JavaScript -->
+        </tbody>
+    </table>
+
+    <script>
+        // URL da API
+        const apiUrl = 'http://localhost:8080/funcionarios';
+
+        // Função para carregar e exibir a lista de funcionários
+        async function carregarFuncionarios() {
+            const response = await fetch(apiUrl);
+            const funcionarios = await response.json();
+            const tbody = document.querySelector('#funcionariosTable tbody');
+            tbody.innerHTML = ''; // Limpa a tabela antes de adicionar os dados
+
+            funcionarios.forEach(funcionario => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${funcionario.nome}</td>
+                    <td>${funcionario.cargo}</td>
+                    <td>${funcionario.salario}</td>
+                    <td>
+                        <button onclick="removerFuncionario('${funcionario.nome}')">Remover</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Função para adicionar um funcionário
+        async function adicionarFuncionario(event) {
+            event.preventDefault(); // Impede o envio padrão do formulário
+
+            const nome = document.getElementById('nome').value;
+            const cargo = document.getElementById('cargo').value;
+            const salario = document.getElementById('salario').value;
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ nome, cargo, salario })
+            });
+
+            if (response.ok) {
+                alert('Funcionário adicionado com sucesso!');
+                carregarFuncionarios(); // Recarrega a lista de funcionários
+            } else {
+                alert('Erro ao adicionar funcionário.');
+            }
+        }
+
+        // Função para remover um funcionário
+        async function removerFuncionario(nome) {
+            const response = await fetch(`${apiUrl}/${nome}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                alert('Funcionário removido com sucesso!');
+                carregarFuncionarios(); // Recarrega a lista de funcionários
+            } else {
+                alert('Erro ao remover funcionário.');
+            }
+        }
+
+        // Adiciona o evento de submit ao formulário
+        document.getElementById('addForm').addEventListener('submit', adicionarFuncionario);
+
+        // Carrega a lista de funcionários ao carregar a página
+        window.onload = carregarFuncionarios;
+    </script>
+</body>
+</html>
