@@ -1,0 +1,4 @@
+com\exemplo\Server.class
+com\exemplo\HelloService.class
+com\exemplo\HelloServiceImpl.class
+com\exemplo\Client.class
